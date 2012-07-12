@@ -1,0 +1,19 @@
+/****************************************************************************\
+ * Copyright (c) 2005 - 2007 The University of Chicago, as Operator of Argonne
+ * National Laboratory.
+ * This file is distributed subject to a Software License Agreement found
+ * in the file LICENSE that is included with this distribution. 
+ ****************************************************************************/
+
+/*
+ * Created on Apr 13, 2007
+ * By Kenneth Evans, Jr.
+ */
+
+package apslogo;
+
+//This file has mixed LF and CRLF endings
+
+public class AAA
+{
+}

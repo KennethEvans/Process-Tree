@@ -1,0 +1,9 @@
+/*******************************************************************************
+ * Copyright © 2007, UChicago Argonne, LLC, All Rights Reserved
+ * 
+ * X-Ray Analysis Software (XRAYS)
+ * 
+ * This file is distributed subject to a Software License Agreement found in the
+ * file LICENSE that is included with this distribution and is available at
+ * http://www.aps.anl.gov/XRAYS/XRAYS.License.htm.
+ ******************************************************************************/

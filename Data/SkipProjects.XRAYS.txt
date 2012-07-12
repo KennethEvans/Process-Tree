@@ -1,0 +1,37 @@
+# Directories beginning with these strings will be skipped
+.metadata
+AreaProj
+ConverterProj
+CoreJava
+EMF Demo
+ISAW Gov
+ISAW\
+Image Viewer Plug-in
+IsawTestRuth
+JFreeChartExamples
+JavaExamples
+JprobeLocal
+SWT Examples
+SWT Launcher
+SWT Paint Example
+SWT-Swing Migration
+Sample
+Tieman
+VEExamples
+VTK Examples
+VisAD Examples
+concurrent
+de.desy
+jca-
+kay
+org.css
+org.eclipse
+Paint1
+org.ananas.xm.eclipse.plugin
+ImageD11
+FreeHEP-Binary
+caj-1.0.4
+Process Tree
+Jmol
+Servers
+swingintegration
