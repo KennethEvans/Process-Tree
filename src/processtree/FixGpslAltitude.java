@@ -338,10 +338,10 @@ public class FixGpslAltitude extends ProcessTree
             in = new BufferedReader(new FileReader(bkpFile));
             out = new PrintWriter(new FileWriter(file));
             String line;
-            int lineNum = 0;
+//            int lineNum = 0;
             Mode mode = Mode.NONE;
             while((line = in.readLine()) != null) {
-                lineNum++;
+//                lineNum++;
                 // Note: "\\s+" matches one or more white spaces
                 if(false) {
                     tokens = line.trim().split("\\s+");
