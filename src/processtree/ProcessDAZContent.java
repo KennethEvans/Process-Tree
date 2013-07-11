@@ -382,7 +382,7 @@ public class ProcessDAZContent extends ProcessTree
     protected void usage() {
         System.out
             .println("\nProcessDAZContent: Compares a given directory of DAZ content\n"
-                + " to a base  directory and removes files and directories from\n"
+                + " to a base directory and removes files and directories from\n"
                 + " the given directory which also exist in the base directory.\n"
                 + "Usage: ProcessDAZContent [Options] processDir baseDir\n"
                 + "  Removes items in processDir that exist in baseDir\n"
