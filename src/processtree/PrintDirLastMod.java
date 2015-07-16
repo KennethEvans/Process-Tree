@@ -15,9 +15,17 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.TreeSet;
 
-public class PrintDirSizes extends ProcessTree
+/**
+ * PrintDirLastMod processes the list of directories on the command line and
+ * finds the latest time one of the files was modified in each of its top-level
+ * directories. It does not check modification times for directories. This can
+ * be uses to check for directories that have not been modified recently.
+ * 
+ * @author Kenneth Evans, Jr.
+ */
+public class PrintDirLastMod extends ProcessTree
 {
-    private static final boolean showProgress = true;
+    private static final boolean showProgress = false;
     protected static final int MAX_DEPTH = 2;
     private TreeSet<Data> results = new TreeSet<Data>();
     private long start, prev, cur;
@@ -32,11 +40,11 @@ public class PrintDirSizes extends ProcessTree
     class Data implements Comparable<Data>
     {
         private File file = null;
-        long size = 0;
+        long lastMod = 0;
 
         Data(File file, long size) {
             this.file = file;
-            this.size = size;
+            this.lastMod = size;
         }
 
         /**
@@ -49,14 +57,14 @@ public class PrintDirSizes extends ProcessTree
         /**
          * @return The value of lastMod.
          */
-        public long getSize() {
-            return size;
+        public long getLastMod() {
+            return lastMod;
         }
 
         public int compareTo(Data data) {
-            if(size == data.size)
+            if(lastMod == data.lastMod)
                 return 0;
-            else if(size > data.size)
+            else if(lastMod > data.lastMod)
                 return -1;
             else
                 return 1;
@@ -67,7 +75,7 @@ public class PrintDirSizes extends ProcessTree
     /**
      * PrintTree constructor.
      */
-    public PrintDirSizes() {
+    public PrintDirLastMod() {
         super();
         start = prev = cur = System.currentTimeMillis();
     }
@@ -128,7 +136,7 @@ public class PrintDirSizes extends ProcessTree
             }
             if(level > 2) return; // Will do finally first
             if(item.isDirectory()) {
-                long size = 0;
+                long lastMod = 0;
                 File directoryList[] = item.listFiles();
                 if(level == 2) {
                     if(showProgress) {
@@ -138,7 +146,7 @@ public class PrintDirSizes extends ProcessTree
                     }
                     // Check for symbolic link
                     if(isSymbolicLink(item)) {
-                        size = 0;
+                        lastMod = 0;
                         if(showProgress) {
                             try {
                                 File canonicalFile = item.getCanonicalFile();
@@ -151,19 +159,19 @@ public class PrintDirSizes extends ProcessTree
                             }
                         }
                     } else {
-                        size = getDirSize(item);
+                        lastMod = getDirLastMod(item, lastMod);
                         if(showProgress) {
                             cur = System.currentTimeMillis();
                             double elapsed = (cur - prev) / (60000.);
                             System.out
                                 .printf(
                                     "  %s %d Bytes %.2f KB %.2f MB [%.2f min %s]\n",
-                                    item.getName(), size, size / 1024., size
-                                        / (1024. * 1024.), elapsed,
+                                    item.getName(), lastMod, lastMod / 1024.,
+                                    lastMod / (1024. * 1024.), elapsed,
                                     getMemoryUsage());
                         }
                     }
-                    Data data = new Data(item, size);
+                    Data data = new Data(item, lastMod);
                     results.add(data);
                 }
                 // Convert it to a list so we can sort it
@@ -189,42 +197,55 @@ public class PrintDirSizes extends ProcessTree
      * @param dir
      * @return
      */
-    protected long getDirSize(File dir) {
-        long size = 0;
-        if(!dir.isDirectory()) return 0;
+    protected long getDirLastMod(File dir, long prevLastMod) {
+        long lastMod = prevLastMod;
+        if(!dir.isDirectory()) {
+            System.out.println("Is not a directory: " + dir.getPath());
+            return prevLastMod;
+        }
         File directoryList[] = dir.listFiles();
         List<File> list = Arrays.asList(directoryList);
         ListIterator<File> iter = list.listIterator();
+        long lastMod1;
         while(iter.hasNext()) {
             File file1 = (File)iter.next();
             if(isSymbolicLink(file1)) {
-                return 0;
+                System.out.println("Is symbolic link: " + dir.getPath());
+                return prevLastMod;
             }
             if(file1.isDirectory()) {
-                size += getDirSize(file1);
+                lastMod1 = getDirLastMod(file1, lastMod);
             } else {
-                size += file1.length();
+                lastMod1 = file1.lastModified();
+            }
+            if(lastMod1 > lastMod) {
+                lastMod = lastMod1;
             }
         }
-        return size;
+        return (lastMod > prevLastMod) ? lastMod : prevLastMod;
     }
 
     /**
      * Prints out the results
      */
     public void printResults() {
-        double total = 0;
-        String format = "  %-40s %10.3f MB %6.2f%%\n";
+        String format = "  %-40s %s\n";
+        long overallLastMod = 0;
+        long lastMod;
         for(Data data : results) {
-            total += data.getSize();
+            lastMod = data.getLastMod();
+            if(lastMod > overallLastMod) {
+                overallLastMod = lastMod;
+            }
         }
-        System.out.printf(format, "TOTAL", total / (1024. * 1024.),
-            (total == 0) ? 0. : 100.);
-
+        Date date = new Date(overallLastMod);
+        System.out.printf(format, "OVERALL", overallLastMod > 0 ? date
+            : "Unknown");
         for(Data data : results) {
-            System.out.printf(format, data.getFile().getName(), data.getSize()
-                / (1024. * 1024.), (total == 0) ? 0. : 100. * data.getSize()
-                / total);
+            lastMod = data.getLastMod();
+            date = new Date(data.getLastMod());
+            System.out.printf(format, data.getFile().getName(),
+                lastMod > 0 ? date : "Unknown");
         }
     }
 
@@ -321,19 +342,21 @@ public class PrintDirSizes extends ProcessTree
      * @see processtree.ProcessTree#usage()
      */
     protected void usage() {
-        System.out.println("\nUsage: java " + this.getClass().getName()
-            + " [Options] directory-list\n"
-            + "  PrintTree: Print directory sizes for the given list \n"
-            + "             of directories\n"
-            + "             Use \"d:\\.\" for the root\n" + "\n"
-            + "  Options:\n" + "    -h        Help (This message)\n" + "");
+        System.out
+            .println("\nUsage: java "
+                + this.getClass().getName()
+                + " [Options] directory-list\n"
+                + "  PrintTree: Print directory last modification time for the given list \n"
+                + "             of directories\n"
+                + "             Use \"d:\\.\" for the root\n" + "\n"
+                + "  Options:\n" + "    -h        Help (This message)\n" + "");
     }
 
     /**
      * @param args
      */
     public static void main(String[] args) {
-        PrintDirSizes printTree = new PrintDirSizes();
+        PrintDirLastMod printTree = new PrintDirLastMod();
         if(!printTree.parseCommand(args)) {
             System.exit(1);
         }
